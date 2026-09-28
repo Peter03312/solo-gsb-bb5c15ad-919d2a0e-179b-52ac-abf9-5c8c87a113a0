@@ -508,3 +508,191 @@ footer {
   margin-top: 24px;
   text-align: center;
 }
+
+/* ---------- 版本对照 ---------- */
+
+.diff-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0 14px;
+}
+
+.diff-filter {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.diff-filter.is-on {
+  opacity: 1;
+}
+
+.diff-filter-added.is-on {
+  background: #e6f6ee;
+  border-color: #9fd6ba;
+  color: var(--ok);
+}
+
+.diff-filter-removed.is-on {
+  background: var(--danger-bg);
+  border-color: #f3c1bb;
+  color: var(--danger);
+}
+
+.diff-filter-modified.is-on {
+  background: #eaf1ff;
+  border-color: #b9cdf5;
+  color: var(--primary);
+}
+
+.diff-filter-renumbered.is-on {
+  background: #f3eefe;
+  border-color: #d3c2f0;
+  color: #6a3fb5;
+}
+
+.diff-filter-unchanged.is-on {
+  background: #f2f4f8;
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+.diff-filter-amb.is-on {
+  background: var(--warn-bg);
+  border-color: #ecd9a8;
+  color: #a86a00;
+}
+
+.diff-kind {
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.diff-kind-added {
+  background: #e6f6ee;
+  color: var(--ok);
+}
+
+.diff-kind-removed {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.diff-kind-modified {
+  background: #eaf1ff;
+  color: var(--primary);
+}
+
+.diff-kind-renumbered {
+  background: #f3eefe;
+  color: #6a3fb5;
+}
+
+.diff-kind-unchanged {
+  background: #f2f4f8;
+  color: var(--muted);
+}
+
+tr.diff-added td {
+  background: #f3fbf7;
+}
+
+tr.diff-removed td {
+  background: #fdf5f4;
+}
+
+tr.diff-modified td {
+  background: #f7f9ff;
+}
+
+tr.diff-renumbered td {
+  background: #faf7fe;
+}
+
+.diff-clause {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.diff-num {
+  font-weight: 700;
+}
+
+.diff-title {
+  font-size: 13.5px;
+}
+
+.diff-snippet {
+  margin: 3px 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'SFMono-Regular', Consolas, 'Source Han Mono', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+  background: #fafbfe;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 5px 8px;
+  max-height: 130px;
+  overflow: auto;
+}
+
+.diff-empty {
+  text-align: center;
+}
+
+.diff-ambiguous-box {
+  border: 1px solid #ecd9a8;
+  background: var(--warn-bg);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.diff-amb-group {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 8px;
+}
+
+.diff-amb-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.diff-amb-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.diff-amb-cols ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+}
+
+.diff-amb-cols li {
+  margin-bottom: 3px;
+}
+
+.diff-table {
+  table-layout: fixed;
+}
+
+.diff-table th:nth-child(2),
+.diff-table th:nth-child(3) {
+  width: 45%;
+}

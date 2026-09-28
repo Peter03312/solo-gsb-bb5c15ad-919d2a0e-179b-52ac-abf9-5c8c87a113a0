@@ -12,13 +12,15 @@ import type {
   RemovalPreviewResult,
   RemovalReplacement,
   UndoResult,
+  VersionDiff,
 } from './types';
-import { SAMPLE_CONTRACT, CLEAN_SAMPLE_CONTRACT } from './sample';
+import { SAMPLE_CONTRACT, CLEAN_SAMPLE_CONTRACT, DIFF_SAMPLE_DRAFT } from './sample';
 import AnalysisPanel from './components/AnalysisPanel';
 import MappingEditor, { type MappingRow } from './components/MappingEditor';
 import PreviewPanel from './components/PreviewPanel';
 import RemovalPanel from './components/RemovalPanel';
 import RemovalPreview from './components/RemovalPreview';
+import VersionDiffPanel from './components/VersionDiffPanel';
 import Conflicts from './components/Conflicts';
 import HighlightedText from './components/HighlightedText';
 
@@ -51,6 +53,10 @@ export default function App() {
   const [removePreview, setRemovePreview] = useState<RemovalPreviewResult | null>(null);
   const [removeCommitted, setRemoveCommitted] = useState<RemovalCommitResult | null>(null);
 
+  // 版本对照状态（只读）
+  const [diffDraft, setDiffDraft] = useState('');
+  const [versionDiff, setVersionDiff] = useState<VersionDiff | null>(null);
+
   const toMapping = (): MappingEntry[] =>
     rows
       .map((r) => ({ from: Number(r.from), to: Number(r.to) }))
@@ -66,6 +72,8 @@ export default function App() {
     setConflicts([]);
     setEditing(false);
     resetRemoval();
+    setDiffDraft('');
+    setVersionDiff(null);
   };
 
   const resetRemoval = () => {
@@ -141,6 +149,7 @@ export default function App() {
       setRows(emptyRows());
       setLastUndo(null);
       resetRemoval();
+      setVersionDiff(null);
       setNotice(`已原子提交：共更新 ${result.changeCount} 处“第X条”。可撤销本次操作。`);
     } catch (e) {
       const err = e as ClientError;
@@ -239,6 +248,7 @@ export default function App() {
       setPreview(null);
       setCommitted(null);
       setLastUndo(null);
+      setVersionDiff(null);
       setNotice(
         `已原子裁撤 ${result.deleteCount} 个条款区块，改写 ${result.changeCount} 处引用。可撤销本次操作。`,
       );
@@ -268,6 +278,7 @@ export default function App() {
       setPreview(null);
       setRows(emptyRows());
       resetRemoval();
+      setVersionDiff(null);
       const opText = result.undone.op === 'remove' ? '条款裁撤' : '改号';
       setNotice(
         `已撤销最近一次${opText}（${result.undone.changeCount} 处引用变更，恢复到操作前文本）。`,
@@ -294,6 +305,36 @@ export default function App() {
     }
   };
 
+  // ---------- 版本对照（只读） ----------
+
+  const changeDiffDraft = (text: string) => {
+    setDiffDraft(text);
+    // 新稿改动后旧结果失效
+    setVersionDiff(null);
+  };
+
+  const doVersionDiff = async () => {
+    if (!doc) return;
+    if (!diffDraft.trim()) {
+      setNotice('请先粘贴用于对照的新稿文本。');
+      return;
+    }
+    setLoading(true);
+    setConflicts([]);
+    setNotice('');
+    try {
+      const { diff } = await api.versionDiff(doc.id, diffDraft);
+      setVersionDiff(diff);
+      setNotice('版本对照完成：结果只读，未改动当前文档与撤销历史。');
+    } catch (e) {
+      const err = e as ClientError;
+      setVersionDiff(null);
+      setNotice(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const changedTargets = committed
     ? new Set(committed.changes.map((c) => c.toNumber))
     : null;
@@ -303,7 +344,7 @@ export default function App() {
       <header>
         <h1>合同条款重编号工作台</h1>
         <p className="subtitle">
-          解析“第X条”定义与引用 · 批量映射改号 · 条款裁撤与引用图影响分析 · 逐处预览 · 原子提交 · 可撤销 · 可导出
+          解析“第X条”定义与引用 · 版本对照（新增/删除/修改/仅改号） · 批量映射改号 · 条款裁撤与引用图影响分析 · 逐处预览 · 原子提交 · 可撤销 · 可导出
         </p>
       </header>
 
@@ -380,7 +421,44 @@ export default function App() {
           <div className="step">2. 检查引用关系</div>
           <AnalysisPanel analysis={analysis} />
 
-          <div className="step">3. 条款裁撤（可选）：勾选条款 → 分析影响 → 替代引用 → 预览确认</div>
+          <div className="step">3. 版本对照（可选，只读）：粘贴新稿 → 按条款对照新增 / 删除 / 修改 / 仅改号</div>
+          <section className="card">
+            <h3>版本对照：以当前已保存合同为旧稿</h3>
+            <p className="muted small">
+              粘贴修改后的合同新稿，系统按现有标题边界拆分两版条款：先去掉标题编号并规范空白，
+              以内容唯一匹配跨编号条款，再对剩余的唯一同号条款配对；重复内容形成多候选时列为
+              <strong>待确认</strong>，不擅自归类。对照过程<strong>只读</strong>，不会修改文档或撤销历史。
+            </p>
+            <textarea
+              className="contract-input"
+              value={diffDraft}
+              onChange={(e) => changeDiffDraft(e.target.value)}
+              placeholder={'在此粘贴新稿合同文本……\n建议先在第 1 步“编辑原文”保存旧稿，再把修订版粘到此处。'}
+              rows={10}
+            />
+            <div className="row-actions">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => changeDiffDraft(DIFF_SAMPLE_DRAFT)}
+              >
+                载入对照示例新稿（与“无冲突示例”旧稿配套，含仅改号 / 修改 / 新增 / 删除）
+              </button>
+              <div className="spacer" />
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={doVersionDiff}
+                disabled={loading || !diffDraft.trim()}
+              >
+                {loading ? '对照中…' : '生成版本对照'}
+              </button>
+            </div>
+          </section>
+
+          {versionDiff && <VersionDiffPanel diff={versionDiff} />}
+
+          <div className="step">4. 条款裁撤（可选）：勾选条款 → 分析影响 → 替代引用 → 预览确认</div>
           <RemovalPanel
             analysis={analysis}
             selected={removeSelected}
@@ -429,7 +507,7 @@ export default function App() {
             </section>
           )}
 
-          <div className="step">4. 改号映射（可选）</div>
+          <div className="step">5. 改号映射（可选）</div>
           <MappingEditor
             analysis={analysis}
             rows={rows}
@@ -458,7 +536,7 @@ export default function App() {
             </section>
           )}
 
-          <div className="step">5. 撤销 / 导出</div>
+          <div className="step">6. 撤销 / 导出</div>
           <section className="card final-bar">
             <button type="button" className="btn" onClick={doUndo} disabled={loading}>
               ↩ 撤销最近一次操作（改号 / 裁撤）

@@ -9,6 +9,7 @@ import type {
   RemovalPreviewResult,
   RemovalReplacement,
   UndoResult,
+  VersionDiff,
 } from './types';
 
 async function request<T>(input: string, init?: RequestInit): Promise<T> {
@@ -91,5 +92,12 @@ export const api = {
   },
   exportUrl(id: number) {
     return `/api/documents/${id}/export`;
+  },
+  /** 版本对照（只读）：以已保存合同为旧稿，newContent 为粘贴的新稿 */
+  versionDiff(id: number, newContent: string) {
+    return request<{ diff: VersionDiff }>(`/api/documents/${id}/diff`, {
+      method: 'POST',
+      body: JSON.stringify({ newContent }),
+    });
   },
 };

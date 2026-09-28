@@ -21,6 +21,7 @@ import {
   type RemovalConflict,
   type RemovalReplacement,
 } from './removal';
+import { diffVersions } from './diff';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -101,6 +102,16 @@ app.post('/api/analyze', (req, res) => {
   const content = typeof req.body?.content === 'string' ? req.body.content : null;
   if (content === null) return fail(res, 400, 'BAD_REQUEST', '缺少 content（纯文本）。');
   res.json({ analysis: analysisOf(content) });
+});
+
+// 版本对照（只读）：入参直接给旧稿/新稿，不写库、不改文档、不产生撤销历史。
+app.post('/api/diff', (req, res) => {
+  const oldContent = typeof req.body?.oldContent === 'string' ? req.body.oldContent : null;
+  const newContent = typeof req.body?.newContent === 'string' ? req.body.newContent : null;
+  if (oldContent === null || newContent === null) {
+    return fail(res, 400, 'BAD_REQUEST', '缺少 oldContent / newContent（纯文本）。');
+  }
+  res.json({ diff: diffVersions(oldContent, newContent) });
 });
 
 app.get('/api/documents', (_req, res) => {
@@ -294,6 +305,19 @@ app.get('/api/documents/:id/export', (req, res) => {
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${filename}`);
   res.send(doc.content);
+});
+
+// 版本对照（只读）：以已保存合同为旧稿、请求体 newContent 为新稿，
+// 按标题边界拆分条款后配对。不写库、不改文档、不触碰撤销历史。
+app.post('/api/documents/:id/diff', (req, res) => {
+  const id = Number(req.params.id);
+  const doc = requireDoc(res, id);
+  if (!doc) return;
+  const newContent = typeof req.body?.newContent === 'string' ? req.body.newContent : null;
+  if (newContent === null) {
+    return fail(res, 400, 'BAD_REQUEST', '缺少 newContent（新稿纯文本）。');
+  }
+  res.json({ diff: diffVersions(doc.content, newContent) });
 });
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));

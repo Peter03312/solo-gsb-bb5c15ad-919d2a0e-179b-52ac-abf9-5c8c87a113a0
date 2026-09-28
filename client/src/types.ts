@@ -199,3 +199,52 @@ export interface ApiError {
     conflicts?: ConflictError[];
   };
 }
+
+// ---------- 版本对照 ----------
+
+export type DiffStatus = 'added' | 'removed' | 'modified' | 'renumbered' | 'unchanged';
+
+export interface DiffClause {
+  number: number;
+  order: number;
+  heading: string;
+  headingLine: number;
+  contentKey: string;
+  snippet: string;
+}
+
+export interface DiffPair {
+  status: DiffStatus;
+  old: DiffClause | null;
+  new: DiffClause | null;
+}
+
+export interface AmbiguousGroup {
+  reason: 'duplicate_content' | 'duplicate_number';
+  number: number | null;
+  contentKey: string | null;
+  message: string;
+  old: DiffClause[];
+  new: DiffClause[];
+}
+
+export interface DiffIssue {
+  kind: IssueKind;
+  number: number;
+  message: string;
+  line: number;
+}
+
+export interface VersionDiff {
+  oldClauseCount: number;
+  newClauseCount: number;
+  pairs: DiffPair[];
+  ambiguous: AmbiguousGroup[];
+  oldIssues: DiffIssue[];
+  newIssues: DiffIssue[];
+  counts: Record<DiffStatus, number> & { ambiguous: number };
+}
+
+export interface VersionDiffResponse {
+  diff: VersionDiff;
+}
