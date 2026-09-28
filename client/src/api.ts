@@ -2,6 +2,7 @@ import type {
   AnalyzeDTO,
   ApiError,
   CommitResult,
+  CompareResponse,
   DocumentDTO,
   PreviewResult,
   RemovalCommitResult,
@@ -87,6 +88,12 @@ export const api = {
     return request<RemovalCommitResult>(`/api/documents/${id}/removal/commit`, {
       method: 'POST',
       body: JSON.stringify({ deletes, replacements }),
+    });
+  },
+  compare(id: number, newContent: string) {
+    return request<CompareResponse>(`/api/documents/${id}/compare`, {
+      method: 'POST',
+      body: JSON.stringify({ newContent }),
     });
   },
   exportUrl(id: number) {

@@ -199,3 +199,48 @@ export interface ApiError {
     conflicts?: ConflictError[];
   };
 }
+
+// ---------- 版本对照 ----------
+
+export type CompareStatus =
+  | 'same'
+  | 'renumbered'
+  | 'modified'
+  | 'added'
+  | 'deleted'
+  | 'ambiguous';
+
+export type AmbiguousReason = 'duplicate-content' | 'duplicate-number';
+
+export interface CompareClause {
+  number: number;
+  index: number;
+  headingLine: number;
+  heading: string;
+  title: string;
+  block: string;
+  snippet: string;
+  pos: TextPos;
+}
+
+export interface CompareItem {
+  status: CompareStatus;
+  old: CompareClause | null;
+  new: CompareClause | null;
+  oldCandidates?: CompareClause[];
+  newCandidates?: CompareClause[];
+  reason?: AmbiguousReason;
+  reasonMessage?: string;
+}
+
+export interface CompareResult {
+  oldClauseCount: number;
+  newClauseCount: number;
+  counts: Record<CompareStatus, number>;
+  items: CompareItem[];
+  warnings: string[];
+}
+
+export interface CompareResponse {
+  comparison: CompareResult;
+}

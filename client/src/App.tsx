@@ -19,6 +19,7 @@ import MappingEditor, { type MappingRow } from './components/MappingEditor';
 import PreviewPanel from './components/PreviewPanel';
 import RemovalPanel from './components/RemovalPanel';
 import RemovalPreview from './components/RemovalPreview';
+import ComparePanel from './components/ComparePanel';
 import Conflicts from './components/Conflicts';
 import HighlightedText from './components/HighlightedText';
 
@@ -303,7 +304,7 @@ export default function App() {
       <header>
         <h1>合同条款重编号工作台</h1>
         <p className="subtitle">
-          解析“第X条”定义与引用 · 批量映射改号 · 条款裁撤与引用图影响分析 · 逐处预览 · 原子提交 · 可撤销 · 可导出
+          解析“第X条”定义与引用 · 批量映射改号 · 条款裁撤与引用图影响分析 · 新旧版本逐条对照 · 逐处预览 · 原子提交 · 可撤销 · 可导出
         </p>
       </header>
 
@@ -429,7 +430,15 @@ export default function App() {
             </section>
           )}
 
-          <div className="step">4. 改号映射（可选）</div>
+          <div className="step">4. 版本对照（可选，只读）：粘贴新稿，与已保存旧稿逐条对照</div>
+          <ComparePanel
+            docId={doc!.id}
+            loading={loading}
+            setLoading={setLoading}
+            onError={setNotice}
+          />
+
+          <div className="step">5. 改号映射（可选）</div>
           <MappingEditor
             analysis={analysis}
             rows={rows}
@@ -458,7 +467,7 @@ export default function App() {
             </section>
           )}
 
-          <div className="step">5. 撤销 / 导出</div>
+          <div className="step">6. 撤销 / 导出</div>
           <section className="card final-bar">
             <button type="button" className="btn" onClick={doUndo} disabled={loading}>
               ↩ 撤销最近一次操作（改号 / 裁撤）

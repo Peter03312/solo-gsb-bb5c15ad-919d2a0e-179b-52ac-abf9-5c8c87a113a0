@@ -21,6 +21,7 @@ import {
   type RemovalConflict,
   type RemovalReplacement,
 } from './removal';
+import { compareVersions } from './compare';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -253,6 +254,19 @@ app.post('/api/documents/:id/removal/commit', (req, res) => {
     changeCount: plan.changes!.length,
     analysis: analysisOf(updated.content),
   });
+});
+
+// 版本对照（只读）：以已保存合同为旧稿，粘贴的新稿不入库、不改文档、不动撤销历史。
+app.post('/api/documents/:id/compare', (req, res) => {
+  const id = Number(req.params.id);
+  const doc = requireDoc(res, id);
+  if (!doc) return;
+  const newContent =
+    typeof req.body?.newContent === 'string' ? req.body.newContent : null;
+  if (newContent === null) {
+    return fail(res, 400, 'BAD_REQUEST', '缺少 newContent（新稿纯文本）。');
+  }
+  res.json({ comparison: compareVersions(doc.content, newContent) });
 });
 
 // 撤销最近一次改号（栈式，可连续撤销）。
